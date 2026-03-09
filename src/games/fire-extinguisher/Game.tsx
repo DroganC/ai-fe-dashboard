@@ -1,8 +1,13 @@
-import { useRef, useCallback, useState } from 'react'
+/**
+ * 连连看 - 消防器材识别（主游戏组件）
+ * 流程符合规则文档：开始页 → 进行中（头部/网格/小知识区/吸底操作栏）→ 结束页
+ */
+import { useRef, useCallback, useState, useEffect, useMemo } from 'react'
 import { observer } from 'mobx-react-lite'
 import { Button, Toast } from 'antd-mobile'
 import { gameStore } from './gameStore'
 import { TYPES, TYPE_COLORS, TYPE_LABELS } from './types'
+import type { Point, MatchedTipDisplay, AnimatingPair } from './types'
 import { getPath } from './utils'
 import {
   LINE_DURATION_MS,
@@ -14,30 +19,56 @@ import {
 } from './constants'
 import './styles.less'
 
-function FireExtinguisherGame() {
+function FireExtinguisherGame(): JSX.Element {
   const gridRef = useRef<HTMLDivElement>(null)
+  /** 格子 DOM 引用，key 为 `${r}-${c}`，用于 getRect、消除动画、提示高亮 */
   const cellRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  /** 全屏连线 SVG 层（规则 2.7：主题色、绘制过渡） */
   const lineSvgRef = useRef<SVGSVGElement>(null)
-  const [animatingOut, setAnimatingOut] = useState<{
-    r1: number
-    c1: number
-    r2: number
-    c2: number
-    typeId: number
-  } | null>(null)
-  const [hintCooldown, setHintCooldown] = useState(0)
-  const [lastMatchedTip, setLastMatchedTip] = useState<{ name: string; tip: string } | null>(null)
-  const [shuffleShake, setShuffleShake] = useState(false)
+  /** 当前正在播放消除动画的一对格子（规则 4.1：画线→消除动画→提交）；非空时禁止点击 */
+  const [animatingOut, setAnimatingOut] = useState<AnimatingPair | null>(null)
+  /** 提示按钮冷却剩余毫秒数（规则 4） */
+  const [hintCooldown, setHintCooldown] = useState<number>(0)
+  /** 小知识区展示内容（规则 2.4：最近一次消除的灭火器名称与小知识） */
+  const [lastMatchedTip, setLastMatchedTip] = useState<MatchedTipDisplay | null>(null)
+  /** 重排抖动动效是否进行中（规则 2.7） */
+  const [shuffleShake, setShuffleShake] = useState<boolean>(false)
+  /** 忙碌状态：消除动画进行中时格子不可点、重排禁用 */
   const isBusy = animatingOut !== null
 
+  /** 卸载时清理所有定时器，避免内存泄漏与卸载后 setState */
+  const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([])
+  const intervalIdsRef = useRef<ReturnType<typeof setInterval>[]>([])
+  useEffect(() => {
+    return () => {
+      timeoutIdsRef.current.forEach((id) => clearTimeout(id))
+      intervalIdsRef.current.forEach((id) => clearInterval(id))
+      timeoutIdsRef.current = []
+      intervalIdsRef.current = []
+    }
+  }, [])
+
+  /** 按类型缓存的格子文字样式，避免每格每帧创建新对象（性能） */
+  const cellStyleByType = useMemo(
+    () =>
+      TYPE_COLORS.map((color) => ({
+        color,
+        fontWeight: 700 as const,
+        fontSize: '0.75em',
+      })),
+    []
+  )
+
+  /** 获取格子相对于视口的位置，用于计算连线路径（规则 3.3） */
   const getRect = useCallback((r: number, c: number): DOMRect | null => {
     const key = `${r}-${c}`
     const el = cellRefs.current[key]
     return el?.getBoundingClientRect() ?? null
   }, [])
 
+  /** 在全屏 SVG 层绘制连线：主题色、绘制过渡动画，LINE_CLEAR_DELAY_MS 后清除（规则 2.7、4.1） */
   const drawLine = useCallback(
-    (path: { x: number; y: number }[]) => {
+    (path: Point[]) => {
       if (!path.length || !lineSvgRef.current) return
       const W = window.innerWidth
       const H = window.innerHeight
@@ -49,13 +80,10 @@ function FireExtinguisherGame() {
         'http://www.w3.org/2000/svg',
         'path'
       )
+      const rootStyle = getComputedStyle(document.documentElement)
       const lineColor =
-        getComputedStyle(document.documentElement)
-          .getPropertyValue('--fe-line-stroke-subtle')
-          .trim() ||
-        getComputedStyle(document.documentElement)
-          .getPropertyValue('--fe-line-stroke')
-          .trim() ||
+        rootStyle.getPropertyValue('--fe-line-stroke-subtle').trim() ||
+        rootStyle.getPropertyValue('--fe-line-stroke').trim() ||
         'rgba(59, 130, 246, 0.75)'
       pathEl.setAttribute('d', d)
       pathEl.setAttribute('fill', 'none')
@@ -109,25 +137,27 @@ function FireExtinguisherGame() {
           c2: result.c2,
           typeId: result.typeId,
         })
-        setTimeout(() => {
+        const id1 = setTimeout(() => {
           const el1 = cellRefs.current[`${result.r1}-${result.c1}`]
           const el2 = cellRefs.current[`${result.r2}-${result.c2}`]
           el1?.classList.add('fe-cell-matched')
           el2?.classList.add('fe-cell-matched')
-          setTimeout(() => {
+          const id2 = setTimeout(() => {
             gameStore.commitClear(result.r1!, result.c1!, result.r2!, result.c2!)
             setAnimatingOut(null)
             const tip = TYPES[result.typeId!]
             if (tip) setLastMatchedTip({ name: tip.name, tip: tip.tip })
           }, MATCH_ANIMATION_MS)
+          timeoutIdsRef.current.push(id2)
         }, LINE_CLEAR_DELAY_MS)
+        timeoutIdsRef.current.push(id1)
       }
     },
     [getRect, drawLine, isBusy]
   )
 
-
-
+  // ---------- 三种界面（规则 2.1） ----------
+  /** 开始页（规则 2.3） */
   if (gameStore.screen === 'start') {
     return (
       <div className="fe-game screen start">
@@ -149,6 +179,7 @@ function FireExtinguisherGame() {
     )
   }
 
+  /** 结束页（规则 2.5、五） */
   if (gameStore.screen === 'end') {
     return (
       <div className="fe-game screen end">
@@ -166,18 +197,21 @@ function FireExtinguisherGame() {
     )
   }
 
-  const handleShuffle = () => {
+  /** 重排：先播抖动再打乱；无解时 Toast 提示（规则 4、2.7） */
+  const handleShuffle = (): void => {
     if (shuffleShake) return
     const noSolution = !gameStore.hasSolution()
     setShuffleShake(true)
-    setTimeout(() => {
+    const id = setTimeout(() => {
       setShuffleShake(false)
       gameStore.shuffle()
       if (noSolution) Toast.show({ content: '当前无解，已重新排列', position: 'bottom', duration: 2000 })
     }, SHUFFLE_SHAKE_MS)
+    timeoutIdsRef.current.push(id)
   }
 
-  const hint = () => {
+  /** 提示：高亮一对可消除格子，并进入冷却（规则 4）；无解时 Toast */
+  const hint = (): void => {
     if (hintCooldown > 0) return
     const h = gameStore.findHint()
     if (!h) {
@@ -188,9 +222,10 @@ function FireExtinguisherGame() {
     const el1 = cellRefs.current[`${h.r1}-${h.c1}`]
     const el2 = cellRefs.current[`${h.r2}-${h.c2}`]
     ;[el1, el2].forEach((el) => el?.classList.add('hint'))
-    setTimeout(() => {
+    const hideId = setTimeout(() => {
       ;[el1, el2].forEach((el) => el?.classList.remove('hint'))
     }, HINT_HIGHLIGHT_MS)
+    timeoutIdsRef.current.push(hideId)
     const t = setInterval(() => {
       setHintCooldown((prev) => {
         const next = prev - 200
@@ -198,8 +233,10 @@ function FireExtinguisherGame() {
         return Math.max(0, next)
       })
     }, 200)
+    intervalIdsRef.current.push(t)
   }
 
+  /** 进行中界面（规则 2.4：头部 → 网格 → 小知识区 → 吸底操作栏） */
   return (
     <div className={`fe-game play ${isBusy ? 'fe-game-busy' : ''}`}>
       <div className="fe-header">
@@ -232,13 +269,7 @@ function FireExtinguisherGame() {
                 title={type >= 0 ? TYPES[type]?.name : ''}
               >
                 {type >= 0 && (
-                  <span
-                    style={{
-                      color: TYPE_COLORS[type],
-                      fontWeight: 700,
-                      fontSize: '0.75em',
-                    }}
-                  >
+                  <span style={cellStyleByType[type]}>
                     {TYPE_LABELS[type]}
                   </span>
                 )}

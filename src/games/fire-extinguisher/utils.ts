@@ -1,8 +1,17 @@
+/**
+ * 连连看 - 路径与判定工具（规则三：可消除条件与连线规则）
+ */
 import type { Point } from './types'
 import { TOTAL_CELLS, GRID_FACTORS } from './types'
 
-/** 根据屏幕宽度计算列数，最多 6 列；行数 = 48/列数 */
-export function computeGridSize(): { cols: number; rows: number } {
+/** 网格尺寸（规则 2.6：列数 4 或 6，行数 = 48÷列数） */
+export interface GridSize {
+  cols: number
+  rows: number
+}
+
+/** 根据屏幕宽度计算列数，最多 6 列；行数 = 48/列数（规则 2.4、2.6） */
+export function computeGridSize(): GridSize {
   const minCell = 44
   const gap = 8
   const padding = 24
@@ -17,8 +26,8 @@ export function computeGridSize(): { cols: number; rows: number } {
 }
 
 /**
- * 格子边界上一点，使得从该点到 toward 的连线为严格水平或竖直（优先满足 90° 路径）。
- * 取「朝向 toward 的那条边」与通过 toward 的水平线 y=toward.y 或竖直线 x=toward.x 的交点。
+ * 格子边界上一点，使该点到 toward 的连线为严格水平或竖直（规则 3.3、3.3.1）。
+ * 取格子边与「通过 toward 的水平线 y=toward.y」或「竖直线 x=toward.x」的交点，朝向 toward 的一侧。
  */
 export function getBoundaryPointAxisAligned(
   getRect: (r: number, c: number) => DOMRect | null,
@@ -50,7 +59,7 @@ export function getBoundaryPointAxisAligned(
   return { x: cx, y: cy }
 }
 
-/** 能否用直线或 L 形连接（无 Z 形） */
+/** 能否用直线或 L 形连接（规则 3.2：无 Z 形，最多 1 拐；中间仅经过空格） */
 export function canConnect(
   grid: number[][],
   rows: number,
@@ -61,6 +70,7 @@ export function canConnect(
   c2: number
 ): boolean {
   if (r1 === r2 && c1 === c2) return false
+  if (r1 < 0 || r1 >= rows || c1 < 0 || c1 >= cols || r2 < 0 || r2 >= rows || c2 < 0 || c2 >= cols) return false
   const t1 = getType(grid, rows, cols, r1, c1)
   const t2 = getType(grid, rows, cols, r2, c2)
   if (t1 !== t2 || t1 === -1) return false
@@ -100,6 +110,7 @@ export function canConnect(
   return false
 }
 
+/** 取格子类型，越界或已消除返回 -1 */
 function getType(
   grid: number[][],
   rows: number,
@@ -126,8 +137,8 @@ function createCachedGetRect(
 }
 
 /**
- * 计算折线路径（直线或 L 形）。
- * 起止点优先满足 90°：取格子边界与「通过下一路径点的水平/竖直线」的交点，保证每段严格水平或竖直。
+ * 计算折线路径（规则 3.2、3.3）：直线或 L 形，起止点在格子边界且满足 90°。
+ * 用于绘制连线（主题色、绘制过渡动画）。
  */
 export function getPath(
   grid: number[][],
