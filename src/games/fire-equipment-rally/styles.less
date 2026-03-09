@@ -1,0 +1,235 @@
+@import '../../theme/colors.less';
+
+/* 消防器材总动员 - 大家来找茬 */
+.fer-game {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 12px;
+  padding-bottom: env(safe-area-inset-bottom);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: @fe-bg-gradient;
+}
+
+.fer-game.fer-screen {
+  justify-content: center;
+  text-align: center;
+}
+
+.fer-title {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: @fe-text-primary;
+}
+
+.fer-desc {
+  font-size: 0.9rem;
+  color: @fe-text-secondary;
+  line-height: 1.5;
+  margin-bottom: 28px;
+}
+
+.fer-btn-action {
+  min-width: 140px;
+}
+
+/* ---------- 找茬页 ---------- */
+.fer-game.fer-play {
+  justify-content: flex-start;
+  padding-bottom: 16px;
+}
+
+.fer-spot-header {
+  width: 100%;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fer-spot-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: @fe-text-primary;
+}
+
+.fer-spot-progress {
+  font-size: 0.85rem;
+  color: @fe-text-secondary;
+}
+
+.fer-spot-wrong {
+  color: @fe-text-muted;
+}
+
+.fer-spot-time {
+  color: @fe-text-secondary;
+}
+
+.fer-spot-time-warn {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.fer-spot-panels {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* 找到差异后下方展示的小知识 */
+.fer-spot-tip {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: @fe-accent-bg;
+  margin-bottom: 12px;
+}
+
+.fer-spot-tip-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: @fe-accent;
+  margin-bottom: 6px;
+}
+
+.fer-spot-tip-text {
+  font-size: 0.875rem;
+  color: @fe-text-secondary;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.fer-spot-panel {
+  min-width: 0;
+}
+
+.fer-spot-image-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 10px;
+  background: @fe-bg-deep;
+  cursor: pointer;
+  border: 2px solid @fe-border-cell;
+  /* 点击时不改变边框，避免闪烁 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fer-spot-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.fer-spot-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: @fe-text-muted;
+  background: @fe-surface-cell;
+  pointer-events: none;
+}
+
+.fer-spot-overlays {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fer-spot-dot {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+
+/* 命中时：描边从无到有连成一整圈（stroke 绘制闭合） */
+.fer-spot-dot-found {
+  color: @fe-success;
+  background: transparent;
+}
+
+.fer-spot-dot-found .fer-spot-dot-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 6px @fe-success) drop-shadow(0 0 10px fade(@fe-success, 60%));
+}
+
+.fer-spot-dot-found .fer-spot-dot-ring {
+  stroke-dasharray: 295; /* 2 * π * 47 */
+  stroke-dashoffset: 295;
+  animation: fer-dot-draw 0.45s ease-out forwards;
+}
+
+@keyframes fer-dot-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Mock 示例：占位图下显示未找到的差异圈（虚线，便于看 cx/cy/r 效果） */
+.fer-spot-dot-hint {
+  border: 2px dashed @fe-accent;
+  background: rgba(59, 130, 246, 0.12);
+  box-shadow: none;
+}
+
+/* 本关通过 / 本关失败 弹层 */
+.fer-spot-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(30, 41, 59, 0.5);
+}
+
+.fer-spot-modal-inner {
+  width: 100%;
+  max-width: 320px;
+  padding: 24px;
+  border-radius: 16px;
+  background: @fe-bg-base;
+  box-shadow: 0 8px 32px rgba(30, 41, 59, 0.2);
+  text-align: center;
+}
+
+.fer-spot-modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: @fe-text-primary;
+  margin-bottom: 8px;
+}
+
+.fer-spot-modal-desc {
+  font-size: 0.9rem;
+  color: @fe-text-secondary;
+  margin-bottom: 20px;
+}
+
+.fer-spot-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* 小屏：双图上下排列 */
+@media (max-width: 380px) {
+  .fer-spot-panels {
+    grid-template-columns: 1fr;
+  }
+}
