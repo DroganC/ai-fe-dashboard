@@ -1,0 +1,59 @@
+/**
+ * 全局主题色系 - 参考 Fintech Mobile App 风格
+ * 参考：Figma Fintech Mobile App Update1.0 (Community) 及常见金融/理财 App 配色
+ * 主调：信任蓝 + 成功绿 + 白/浅灰背景 + 深灰文字
+ */
+@fe-bg-base: #ffffff;
+@fe-bg-mid: #f8fafc;
+@fe-bg-deep: #f1f5f9;
+@fe-bg-gradient: linear-gradient(180deg, @fe-bg-base 0%, @fe-bg-mid 50%, @fe-bg-deep 100%);
+
+@fe-text-primary: #1e293b;
+@fe-text-secondary: #475569;
+@fe-text-muted: #64748b;
+@fe-text-tip: #334155;
+
+/* 主色：金融蓝（信任、专业） */
+@fe-accent: #3b82f6;
+@fe-accent-hover: rgba(59, 130, 246, 0.2);
+@fe-accent-bg: rgba(59, 130, 246, 0.08);
+
+/* 成功/正向：绿色 */
+@fe-success: #10b981;
+@fe-success-border: rgba(16, 185, 129, 0.45);
+@fe-success-glow: rgba(16, 185, 129, 0.3);
+
+@fe-border-subtle: rgba(30, 41, 59, 0.08);
+@fe-border-cell: rgba(30, 41, 59, 0.12);
+@fe-surface-overlay: rgba(30, 41, 59, 0.03);
+@fe-surface-cell: linear-gradient(145deg, #fafbfc 0%, #f1f5f9 100%);
+
+/* 连线：主色蓝柔和变体，避免纯黑生硬 */
+@fe-line-stroke: #60a5fa;
+@fe-line-stroke-subtle: rgba(59, 130, 246, 0.75);
+@fe-line-width: 2;
+
+// 导出为 CSS 变量
+:root {
+  --fe-bg-base: @fe-bg-base;
+  --fe-bg-mid: @fe-bg-mid;
+  --fe-bg-deep: @fe-bg-deep;
+  --fe-bg-gradient: @fe-bg-gradient;
+  --fe-text-primary: @fe-text-primary;
+  --fe-text-secondary: @fe-text-secondary;
+  --fe-text-muted: @fe-text-muted;
+  --fe-text-tip: @fe-text-tip;
+  --fe-accent: @fe-accent;
+  --fe-accent-hover: @fe-accent-hover;
+  --fe-accent-bg: @fe-accent-bg;
+  --fe-success: @fe-success;
+  --fe-success-border: @fe-success-border;
+  --fe-success-glow: @fe-success-glow;
+  --fe-border-subtle: @fe-border-subtle;
+  --fe-border-cell: @fe-border-cell;
+  --fe-surface-overlay: @fe-surface-overlay;
+  --fe-surface-cell: @fe-surface-cell;
+  --fe-line-stroke: @fe-line-stroke;
+  --fe-line-stroke-subtle: @fe-line-stroke-subtle;
+  --fe-line-width: @fe-line-width;
+}

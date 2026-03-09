@@ -1,0 +1,256 @@
+@import '../../theme/colors.less';
+
+/* 灭火器连连看 - 游戏样式（浅色主题） */
+.fe-game {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 12px;
+  padding-bottom: env(safe-area-inset-bottom);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: @fe-bg-gradient;
+}
+
+.fe-game.screen {
+  justify-content: center;
+  text-align: center;
+}
+
+.fe-title {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: @fe-text-primary;
+}
+
+.fe-desc {
+  font-size: 0.9rem;
+  color: @fe-text-secondary;
+  line-height: 1.5;
+  margin-bottom: 28px;
+}
+
+.fe-game.play {
+  justify-content: flex-start;
+  /* 为吸底按钮栏预留空间，避免内容被遮挡 */
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
+.fe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: @fe-text-muted;
+}
+
+.fe-header .fe-score {
+  color: @fe-success;
+}
+
+.fe-grid {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: @fe-surface-overlay;
+  border-radius: 12px;
+  border: 2px solid @fe-border-subtle;
+  margin-bottom: 12px;
+  width: 100%;
+  max-width: 100%;
+  max-height: 66.67vh;
+  align-content: start;
+}
+
+/* 重排：抖动动效 */
+@keyframes fe-grid-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.fe-grid.fe-grid-shake {
+  animation: fe-grid-shake 0.22s ease-in-out;
+}
+
+.fe-cell {
+  aspect-ratio: 1;
+  min-height: 0;
+  border-radius: 10px;
+  border: 2px solid @fe-border-cell;
+  background: @fe-surface-cell;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.fe-cell.fe-cell-matched {
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.32s ease-out, opacity 0.32s ease-out;
+}
+
+.fe-cell:hover:not(.empty) {
+  border-color: @fe-accent;
+  box-shadow: 0 0 12px @fe-accent-hover;
+}
+
+/* 选中格子：聚焦呼吸特效 */
+@keyframes fe-cell-breathing {
+  0%,
+  100% {
+    transform: scale(1.03);
+    box-shadow: 0 0 12px @fe-accent-hover, 0 0 0 0 rgba(59, 130, 246, 0.25);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 20px @fe-accent-hover, 0 0 24px 2px rgba(59, 130, 246, 0.2);
+  }
+}
+
+.fe-cell.selected {
+  border-color: @fe-accent;
+  background: @fe-accent-bg;
+  animation: fe-cell-breathing 1.8s ease-in-out infinite;
+}
+
+.fe-cell.hint {
+  border-color: @fe-success;
+  box-shadow: 0 0 16px @fe-success-glow;
+}
+
+.fe-cell.empty {
+  visibility: hidden;
+  cursor: default;
+  border-color: transparent;
+  background: transparent;
+}
+
+.fe-game .fe-btn-action {
+  min-width: 128px;
+  height: 48px;
+  font-size: 17px;
+  font-weight: 600;
+  border-radius: 24px;
+}
+
+.fe-game .adm-button.fe-btn-action {
+  background: @fe-accent !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+.fe-game .adm-button.fe-btn-action::before {
+  border: none;
+}
+
+.fe-game .adm-button.fe-btn-action:active {
+  opacity: 0.92;
+}
+
+/* 连线成功小知识：游戏容器下方、按钮上方 */
+.fe-tip-area {
+  min-height: 52px;
+  width: 100%;
+  max-width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.fe-tip-inline-placeholder {
+  font-size: 12px;
+  color: @fe-text-muted;
+}
+
+.fe-tip-inline {
+  .fe-tip-inline-title {
+    font-weight: 600;
+    color: @fe-success;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  .fe-tip-inline-desc {
+    font-size: 12px;
+    color: @fe-text-tip;
+    line-height: 1.4;
+  }
+}
+
+/* 吸底：提示/重排 按钮栏 */
+.fe-actions-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: @fe-bg-base;
+  border-top: 1px solid @fe-border-subtle;
+  z-index: 40;
+}
+
+.fe-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* 消除动画期间禁止点击 */
+.fe-game.fe-game-busy .fe-grid {
+  pointer-events: none;
+}
+
+.fe-toast-tip {
+  padding: 4px 0;
+  .fe-toast-title {
+    font-weight: 600;
+    color: @fe-success;
+    margin-bottom: 4px;
+  }
+  .fe-toast-desc {
+    font-size: 12px;
+    color: @fe-text-tip;
+  }
+}
+
+.fe-line-svg {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* 连线：拐点带小弧度（round），主题主色柔和蓝 */
+.fe-line-svg path {
+  stroke: @fe-line-stroke;
+  stroke-width: @fe-line-width;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fe-game.end .fe-score {
+  color: @fe-success;
+  margin-bottom: 24px;
+}
